@@ -26,27 +26,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $current_data = $stmt_old->fetch();
     $profile_pic = $current_data['profile_pic'] ?? null;
 
-    // Suriin kung may in-upload na larawan at walang error
-    if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
-        $file_tmp_path = $_FILES['profile_pic']['tmp_name'];
-        $file_name = $_FILES['profile_pic']['name'];
-        $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-        
-        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
-        if (in_array($file_extension, $allowed_extensions)) {
-            $img_binary = file_get_contents($file_tmp_path);
-            if ($img_binary !== false) {
-                // I-convert agad sa Base64 para maiwasan ang Render ephemeral storage issues
-                $profile_pic = 'data:image/' . ($file_extension === 'jpg' ? 'jpeg' : $file_extension) . ';base64,' . base64_encode($img_binary);
+    // Suriin kung may in-upload na bagong larawan mula sa file input
+    if (isset($_FILES['profile_pic'])) {
+        if ($_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
+            $file_tmp_path = $_FILES['profile_pic']['tmp_name'];
+            $file_name = $_FILES['profile_pic']['name'];
+            $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+            
+            $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
+            if (in_array($file_extension, $allowed_extensions)) {
+                $img_binary = file_get_contents($file_tmp_path);
+                if ($img_binary !== false) {
+                    // I-convert agad sa Base64 data URI string
+                    $profile_pic = 'data:image/' . ($file_extension === 'jpg' ? 'jpeg' : $file_extension) . ';base64,' . base64_encode($img_binary);
+                }
+            } else {
+                $error_msg = "Invalid file extension. Please upload JPG, JPEG, PNG, or GIF.";
             }
+        } elseif ($_FILES['profile_pic']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $error_msg = "May error sa pag-upload ng file (Error Code: " . $_FILES['profile_pic']['error'] . "). Maaaring masyadong malaki ang larawan.";
         }
     }
 
-    $update_stmt = $pdo->prepare("UPDATE visitors SET full_name = ?, email = ?, contact_no = ?, address = ?, sex = ?, office_to_visit = ?, purpose = ?, profile_pic = ? WHERE visitor_id = ?");
-    if ($update_stmt->execute([$full_name, $email, $contact_no, $address, $sex, $office, $purpose, $profile_pic, $visitor_id])) {
-        $success_msg = "Profile updated successfully!";
-    } else {
-        $error_msg = "Failed to update profile.";
+    if (empty($error_msg)) {
+        $update_stmt = $pdo->prepare("UPDATE visitors SET full_name = ?, email = ?, contact_no = ?, address = ?, sex = ?, office_to_visit = ?, purpose = ?, profile_pic = ? WHERE visitor_id = ?");
+        if ($update_stmt->execute([$full_name, $email, $contact_no, $address, $sex, $office, $purpose, $profile_pic, $visitor_id])) {
+            $success_msg = "Profile updated successfully!";
+        } else {
+            $error_msg = "Failed to update profile in database.";
+        }
     }
 }
 
