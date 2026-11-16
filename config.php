@@ -1,7 +1,7 @@
 <?php
 $host = "ballast.proxy.rlwy.net";
 $port = "42846";
-$db   = "railway";
+$db   = "vsu_vms";
 $user = "root";
 $pass = "WDMPFCXhKSKJQcXJcrQKDlMUvoIEyKpR";
 
