@@ -168,9 +168,13 @@ $logs = $stmt->fetchAll();
                             <?php 
                             $no = 1;
                             foreach ($logs as $log): 
-                                // Fixed profile picture path resolution
+                                // Na-update na profile picture path resolution para sa Base64 at Legacy filenames
                                 $raw_pic = $log['profile_pic'] ?? '';
-                                if (!empty($raw_pic)) {
+                                $is_base64 = (strpos($raw_pic, 'data:image/') === 0);
+
+                                if ($is_base64) {
+                                    $pic = $raw_pic;
+                                } elseif (!empty($raw_pic)) {
                                     $pic_path = (strpos($raw_pic, 'uploads/') === 0) ? $raw_pic : "uploads/" . $raw_pic;
                                     $pic = file_exists($pic_path) ? $pic_path : "uploads/default.png";
                                 } else {
