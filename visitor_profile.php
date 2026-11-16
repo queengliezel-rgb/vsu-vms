@@ -20,20 +20,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $office         = trim($_POST['office_to_visit'] ?? '');
     $purpose        = trim($_POST['purpose'] ?? '');
 
+    // Kunin ang kasalukuyang profile pic sa database bilang fallback kung walang bagong upload
     $stmt_old = $pdo->prepare("SELECT profile_pic FROM visitors WHERE visitor_id = ?");
     $stmt_old->execute([$visitor_id]);
     $current_data = $stmt_old->fetch();
     $profile_pic = $current_data['profile_pic'] ?? null;
 
-    // Convert uploaded image directly to Base64 to bypass Render storage limits
+    // Suriin kung may in-upload na larawan at walang error
     if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
         $file_tmp_path = $_FILES['profile_pic']['tmp_name'];
-        $file_extension = strtolower(pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION));
+        $file_name = $_FILES['profile_pic']['name'];
+        $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
         
         $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
         if (in_array($file_extension, $allowed_extensions)) {
-            $img_data = file_get_contents($file_tmp_path);
-            $profile_pic = 'data:image/' . $file_extension . ';base64,' . base64_encode($img_data);
+            $img_binary = file_get_contents($file_tmp_path);
+            if ($img_binary !== false) {
+                // I-convert agad sa Base64 para maiwasan ang Render ephemeral storage issues
+                $profile_pic = 'data:image/' . ($file_extension === 'jpg' ? 'jpeg' : $file_extension) . ';base64,' . base64_encode($img_binary);
+            }
         }
     }
 
