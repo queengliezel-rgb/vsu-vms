@@ -1,5 +1,6 @@
 <?php
-$host = "mysql.railway.internal"; 
+$host = "ballast.proxy.rlwy.net";
+$port = "42846";
 $db   = "railway";     
 $user = "root";             
 $pass = "WDMPFCXhKSKJQcXJcrQKDlMUvoIEyKpR";
