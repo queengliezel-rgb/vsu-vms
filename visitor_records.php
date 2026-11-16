@@ -45,11 +45,25 @@ $visitors = $pdo->query("SELECT * FROM visitors ORDER BY id DESC")->fetchAll();
                     <h6 class="fw-bold text-success mb-0">VISAYAS STATE UNIVERSITY</h6>
                     <small class="text-muted">VISITOR PASS</small>
                     
-                    <!-- Profile Picture Display -->
+                    <!-- Profile Picture Display with Fallback -->
                     <div class="d-flex justify-content-center my-2">
-                        <?php if (!empty($v['profile_pic'])): ?>
-                            <img src="<?= $v['profile_pic'] ?>" alt="Profile" class="rounded-circle border" width="70" height="70" style="object-fit: cover;">
+                        <?php 
+                        $pic = $v['profile_pic'] ?? '';
+                        $is_base64 = (strpos($pic, 'data:image/') === 0);
+                        $is_filename = (!empty($pic) && !$is_base64);
+                        ?>
+
+                        <?php if ($is_base64): ?>
+                            <!-- Base64 Image (New Webcam / Uploads) -->
+                            <img src="<?= $pic ?>" alt="Profile" class="rounded-circle border" width="70" height="70" style="object-fit: cover;">
+                        <?php elseif ($is_filename): ?>
+                            <!-- Legacy Filename Image -->
+                            <img src="uploads/<?= htmlspecialchars($pic) ?>" alt="Profile" class="rounded-circle border" width="70" height="70" style="object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="rounded-circle border bg-light text-success fw-bold align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 1.5rem; display: none;">
+                                <?= strtoupper(substr($v['full_name'], 0, 1)) ?>
+                            </div>
                         <?php else: ?>
+                            <!-- Default Initial Fallback -->
                             <div class="rounded-circle border bg-light text-success fw-bold d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; font-size: 1.5rem;">
                                 <?= strtoupper(substr($v['full_name'], 0, 1)) ?>
                             </div>
