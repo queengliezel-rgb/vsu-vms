@@ -2,8 +2,7 @@
 session_start();
 require_once 'config.php';
 
-$error = '';
-$success = false;
+$error = '';$success = false;
 $new_visitor = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -14,44 +13,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address    = trim($_POST['address'] ?? '');
     $sex        = trim($_POST['sex'] ?? '');
     $email      = trim($_POST['email'] ?? '');
-    $password   = $_POST['password'] ?? '';
-    $c_password = $_POST['confirm_password'] ?? '';
+    $password   =$_POST['password'] ?? '';
+    $c_password =$_POST['confirm_password'] ?? '';
 
-    if ($password !== $c_password) {
-        $error = "Hindi nagtutugma ang password at confirm password!";
+    if ($password !== $c_password) {$error = "Hindi nagtutugma ang password at confirm password!";
     } else {
         $visitor_id = "VSU-V-" . date('Ymd') . "-" . rand(100, 999);
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-        $profile_pic = 'default.png';
+        $profile_pic = '';
         if (!empty($_POST['profile_pic_base64'])) {
-            $data = $_POST['profile_pic_base64'];
-            if (preg_match('/^data:image\/(\w+);base64,/', $data, $type)) {
-                $data = substr($data, strpos($data, ',') + 1);
-                $type = strtolower($type[1]);
-
-                if (in_array($type, ['jpg', 'jpeg', 'png'])) {
-                    $data = base64_decode($data);
-                    if ($data !== false) {
-                        $new_file_name = "visitor_" . time() . "_" . rand(1000, 9999) . "." . $type;
-                        $upload_dir = 'uploads/';
-                        
-                        if (!is_dir($upload_dir)) {
-                            mkdir($upload_dir, 0777, true);
-                        }
-                        
-                        if (file_put_contents($upload_dir . $new_file_name, $data)) {
-                            $profile_pic = $new_file_name;
-                        }
-                    }
-                }
+            $data =$_POST['profile_pic_base64'];
+            if (strpos($data, 'data:image/') === 0) {
+                $profile_pic =$data;
+            } else {
+                $profile_pic = 'data:image/png;base64,' .$data;
             }
         }
 
-        $stmt = $pdo->prepare("INSERT INTO visitors (visitor_id, full_name, contact_no, purpose, office_to_visit, address, sex, email, password, profile_pic) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt =$pdo->prepare("INSERT INTO visitors (visitor_id, full_name, contact_no, purpose, office_to_visit, address, sex, email, password, profile_pic) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
-        if ($stmt->execute([$visitor_id, $full_name, $contact_no, $purpose, $office, $address, $sex, $email, $hashed_password, $profile_pic])) {
-            $success = true;
+        if ($stmt->execute([$visitor_id, $full_name,$contact_no, $purpose,$office, $address,$sex, $email,$hashed_password, $profile_pic])) {$success = true;
             $new_visitor = [
                 'visitor_id' => $visitor_id,
                 'full_name'  => $full_name,
@@ -283,70 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="border p-4 rounded bg-light mb-4 text-start">
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
                     <div class="d-flex align-items-center">
-                        <img src="uploads/<?= htmlspecialchars($new_visitor['profile_pic']) ?>" class="rounded-circle border me-3" width="60" height="60" style="object-fit: cover;">
-                        <div>
-                            <span class="badge bg-success mb-1">Active Pass</span>
-                            <h4 class="fw-bold mb-0 text-dark"><?= htmlspecialchars($new_visitor['full_name']) ?></h4>
-                        </div>
-                    </div>
-                    <div id="qrcode"></div>
-                </div>
-                <p class="mb-1 small"><strong>Visitor ID:</strong> <span class="text-primary font-monospace"><?= $new_visitor['visitor_id'] ?></span></p>
-                <p class="mb-1 small"><strong>Email:</strong> <?= htmlspecialchars($new_visitor['email']) ?></p>
-                <p class="mb-1 small"><strong>Office Visited:</strong> <?= htmlspecialchars($new_visitor['office']) ?></p>
-                <p class="mb-1 small"><strong>Purpose:</strong> <?= htmlspecialchars($new_visitor['purpose']) ?></p>
-            </div>
-
-            <div class="d-flex gap-2">
-                <button onclick="window.print()" class="btn btn-outline-secondary w-50">
-                    <i class="fa-solid fa-print me-1"></i> Print Pass
-                </button>
-                <a href="visitor_login.php" class="btn btn-gold w-50 text-decoration-none d-flex align-items-center justify-content-center">
-                    Log in now
-                </a>
-            </div>
-        </div>
-
-        <script>
-            new QRCode(document.getElementById("qrcode"), {
-                text: "<?= $new_visitor['visitor_id'] ?>",
-                width: 100,
-                height: 100
-            });
-        </script>
-    <?php endif; ?>
-</div>
-
-<script>
-// Camera capture script
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const snapButton = document.getElementById('snap');
-const previewImg = document.getElementById('preview-img');
-const base64Input = document.getElementById('profile_pic_base64');
-
-if (video) {
-    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-        .then(stream => { video.srcObject = stream; })
-        .catch(err => { console.log("Camera access denied or unavailable."); });
-
-    snapButton.addEventListener('click', function() {
-        const context = canvas.getContext('2d');
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataURL = canvas.toDataURL('image/png');
-        base64Input.value = dataURL;
-        previewImg.src = dataURL;
-        previewImg.style.display = 'inline-block';
-        alert("Photo captured successfully!");
-    });
-
-    document.getElementById('registrationForm').addEventListener('submit', function(e) {
-        if (!base64Input.value) {
-            e.preventDefault();
-            alert("Please click 'Capture Photo' to take your profile picture using the camera before submitting.");
-        }
-    });
-}
-</script>
-</body>
-</html>
+                        <?php if (!empty($new_visitor['profile_pic'])): ?>
+                            <img src="<?= $new_visitor['profile_pic'] ?>" class="rounded-circle border me-3" width="60" height="60" style="object-fit: cover;">
+                        <?php else: ?>
+                            <div class="rounded-circle border me-3 d-flex align-items-center justify-content-center bg-white text-success fw-bold" style="width:
