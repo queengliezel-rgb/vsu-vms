@@ -3,7 +3,7 @@ $host = "ballast.proxy.rlwy.net";
 $port = "42846";
 $db   = "railway";
 $user = "root";
-$pass = "WDMPFCXhkSKJQcXJcrQKD1MUvOTFeyKpR";
+$pass = "WDMPFCXhKSKJQcXJcrQKDlMUvoIEyKpR";
 
 try {
     $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass);
