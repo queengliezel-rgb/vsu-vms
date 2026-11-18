@@ -20,13 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $office         = trim($_POST['office_to_visit'] ?? '');
     $purpose        = trim($_POST['purpose'] ?? '');
 
-    // Kunin ang kasalukuyang profile pic sa database bilang fallback kung walang bagong upload
     $stmt_old = $pdo->prepare("SELECT profile_pic FROM visitors WHERE visitor_id = ?");
     $stmt_old->execute([$visitor_id]);
     $current_data = $stmt_old->fetch();
     $profile_pic = $current_data['profile_pic'] ?? null;
 
-    // Suriin kung may in-upload na bagong larawan mula sa file input
     if (isset($_FILES['profile_pic'])) {
         if ($_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
             $file_tmp_path = $_FILES['profile_pic']['tmp_name'];
@@ -37,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
             if (in_array($file_extension, $allowed_extensions)) {
                 $img_binary = file_get_contents($file_tmp_path);
                 if ($img_binary !== false) {
-                    // I-convert agad sa Base64 data URI string
                     $profile_pic = 'data:image/' . ($file_extension === 'jpg' ? 'jpeg' : $file_extension) . ';base64,' . base64_encode($img_binary);
                 }
             } else {
@@ -92,6 +89,7 @@ if (!$visitor) {
             min-height: 100vh;
         }
 
+        /* Sidebar Styling */
         .sidebar {
             width: 260px;
             background-color: var(--vsu-green);
@@ -102,7 +100,8 @@ if (!$visitor) {
             top: 0;
             bottom: 0;
             left: 0;
-            z-index: 100;
+            z-index: 1050;
+            transition: transform 0.3s ease-in-out;
         }
 
         .sidebar-brand {
@@ -112,7 +111,7 @@ if (!$visitor) {
             color: #fff;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
             background-color: #0b3d25;
         }
 
@@ -172,10 +171,39 @@ if (!$visitor) {
             color: #0b3d25;
         }
 
+        /* Mobile Top Navbar with Hamburger */
+        .mobile-header {
+            display: none;
+            background-color: var(--vsu-green);
+            color: white;
+            padding: 12px 20px;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1040;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Backdrop Overlay for Mobile Drawer */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1045;
+        }
+
         .main-content {
             margin-left: 260px;
             flex-grow: 1;
             padding: 30px;
+            width: calc(100% - 260px);
         }
 
         .breadcrumb-text {
@@ -226,14 +254,56 @@ if (!$visitor) {
             height: 100%;
             object-fit: cover;
         }
+
+        /* Responsive Media Query for Mobile */
+        @media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .mobile-header {
+                display: flex;
+            }
+            .sidebar-overlay.show {
+                display: block;
+            }
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 20px;
+                padding-top: 80px;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
+    <!-- Mobile Top Header with Hamburger Button (Katulad sa iyong drawing) -->
+    <div class="mobile-header">
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn text-white p-1" id="sidebarToggle" aria-label="Toggle Menu">
+                <i class="fa-solid fa-bars fa-lg"></i>
+            </button>
+            <span class="fw-bold"><i class="fa-solid fa-qrcode text-warning me-1"></i> VSU VMS PORTAL</span>
+        </div>
+        <span class="small text-warning bg-dark px-2 py-1 rounded">Visitor</span>
+    </div>
+
+    <!-- Backdrop Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar / Slide-out Drawer -->
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <i class="fa-solid fa-qrcode text-warning"></i> VSU <span>VMS PORTAL</span>
+            <div>
+                <i class="fa-solid fa-qrcode text-warning"></i> VSU <span>VMS PORTAL</span>
+            </div>
+            <!-- Close (X) Button (Katulad sa ikalawang screenshot) -->
+            <button class="btn text-white d-lg-none p-1" id="sidebarClose" aria-label="Close Menu">
+                <i class="fa-solid fa-xmark fa-lg"></i>
+            </button>
         </div>
         <div class="px-3 pt-3 pb-2 text-uppercase text-muted fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Workspace</div>
         <ul class="sidebar-menu">
@@ -386,6 +456,29 @@ if (!$visitor) {
             </div>
         </div>
     </div>
+
+    <!-- Toggle Drawer Script -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarClose = document.getElementById('sidebarClose');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.add('show');
+            sidebarOverlay.classList.add('show');
+        });
+
+        sidebarClose.addEventListener('click', () => {
+            sidebar.classList.remove('show');
+            sidebarOverlay.classList.remove('show');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('show');
+            sidebarOverlay.classList.remove('show');
+        });
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
