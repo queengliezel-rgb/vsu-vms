@@ -3,6 +3,7 @@ session_start();
 require_once 'config.php';
 
 $error = '';
+$email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email    = trim($_POST['email'] ?? '');
@@ -240,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST">
             <div class="mb-3">
                 <label class="form-label">Email Address</label>
-                <input type="email" name="email" class="form-control" placeholder="visitor@gmail.com" required>
+                <input type="email" name="email" class="form-control" placeholder="visitor@gmail.com" value="<?= htmlspecialchars($email) ?>" required>
             </div>
             
             <div class="mb-3">
@@ -258,7 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="checkbox" class="form-check-input" id="rememberMe">
                     <label class="form-check-label text-muted small" for="rememberMe">Remember me</label>
                 </div>
-                <a href="#" class="link-green small">Forgot Password?</a>
+                <a href="forgot_password.php" class="link-green small">Forgot Password?</a>
             </div>
 
             <button type="submit" class="btn btn-gold mb-3">
