@@ -37,8 +37,8 @@ $logs = $log_stmt->fetchAll();
             --bg-color: #f3f6f4;
         }
         body { background-color: var(--bg-color); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; min-height: 100vh; }
-        .sidebar { width: 260px; background-color: var(--vsu-green); color: #fff; display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 100; }
-        .sidebar-brand { padding: 20px; font-weight: 800; font-size: 1.1rem; color: #fff; display: flex; align-items: center; gap: 10px; background-color: #0b3d25; }
+        .sidebar { width: 260px; background-color: var(--vsu-green); color: #fff; display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 1050; transition: transform 0.3s ease-in-out; }
+        .sidebar-brand { padding: 20px; font-weight: 800; font-size: 1.1rem; color: #fff; display: flex; align-items: center; justify-content: space-between; background-color: #0b3d25; }
         .sidebar-brand span { color: var(--vsu-gold); }
         .sidebar-menu { padding: 20px 15px; list-style: none; margin: 0; flex-grow: 1; }
         .sidebar-menu li { margin-bottom: 8px; }
@@ -47,15 +47,42 @@ $logs = $log_stmt->fetchAll();
         .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
         .btn-logout { background-color: #fff; color: var(--vsu-green); font-weight: 700; border: none; width: 100%; padding: 10px; border-radius: 8px; text-align: center; text-decoration: none; display: inline-block; }
         .btn-logout:hover { background-color: #f8f9fa; color: #0b3d25; }
-        .main-content { margin-left: 260px; flex-grow: 1; padding: 30px; }
+        .mobile-header { display: none; background-color: var(--vsu-green); color: white; padding: 12px 20px; align-items: center; justify-content: space-between; position: fixed; top: 0; left: 0; right: 0; z-index: 1040; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1045; }
+        .main-content { margin-left: 260px; flex-grow: 1; padding: 30px; width: calc(100% - 260px); }
         .page-card { background: #ffffff; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #e9ecef; padding: 25px; }
+
+        @media (max-width: 991.98px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .mobile-header { display: flex; }
+            .sidebar-overlay.show { display: block; }
+            .main-content { margin-left: 0; width: 100%; padding: 20px; padding-top: 80px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
+    <div class="mobile-header">
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn text-white p-1" id="sidebarToggle" aria-label="Toggle Menu">
+                <i class="fa-solid fa-bars fa-lg"></i>
+            </button>
+            <span class="fw-bold"><i class="fa-solid fa-qrcode text-warning me-1"></i> VSU VMS PORTAL</span>
+        </div>
+        <span class="small text-warning bg-dark px-2 py-1 rounded">Visitor</span>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <i class="fa-solid fa-qrcode text-warning"></i> VSU <span>VMS PORTAL</span>
+            <div>
+                <i class="fa-solid fa-qrcode text-warning"></i> VSU <span>VMS PORTAL</span>
+            </div>
+            <button type="button" class="btn text-white d-lg-none p-1" id="sidebarClose" aria-label="Close Menu">
+                <i class="fa-solid fa-xmark fa-lg"></i>
+            </button>
         </div>
         <div class="px-3 pt-3 pb-2 text-uppercase text-muted fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">Workspace</div>
         <ul class="sidebar-menu">
@@ -114,5 +141,24 @@ $logs = $log_stmt->fetchAll();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarClose = document.getElementById('sidebarClose');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function closeDrawer() {
+            sidebar.classList.remove('show');
+            sidebarOverlay.classList.remove('show');
+        }
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.add('show');
+            sidebarOverlay.classList.add('show');
+        });
+
+        sidebarClose.addEventListener('click', closeDrawer);
+        sidebarOverlay.addEventListener('click', closeDrawer);
+    </script>
 </body>
 </html>
